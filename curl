@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+curl https://api.openai.com/v1/chat/completions?limit=100 \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json" > completions.json
+for completion_id in $(jq -r '.data[].id' completions.json); do
+  curl https://api.openai.com/v1/chat/completions/${completion_id}/messages \
+    -H "Authorization: Bearer $OPENAI_API_KEY" \
+    -H "Content-Type: application/json" >> messages.json
+done
+
+curl -X DELETE https://api.openai.com/v1/chat/completions/chatcmpl-BxfX5EBtbZBdvzKeM8qgtYqjf6knX \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -H "Content-Type: application/json"
+
+
+    "logprobs": true,
+    "top_logprobs": 20,
+    "temperature": 0,
+
+curl https://api.openai.com/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $OPENAI_API_KEY" \
+  -d '{
+    "model": "o1",
+    "store": true,
+    "logprobs": true,
+    "top_logprobs": 20,
+    "temperature": 0,
+    "messages": [
+      {
+        "role": "developer",
+        "content": "You are a helpful assistant."
+      },
+      {
+        "role": "user",
+        "content": "Hello!"
+      }
+    ]
+  }'
