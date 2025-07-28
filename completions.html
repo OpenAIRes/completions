@@ -1,19 +1,22 @@
 <!doctype html>
 <html lang="en-US">
-    <head>       
+    <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>completions</title>
     </head>
     <body>
-        <span prompt></span>
-        <span completion></span>
+        <span id='prompt'></span>
+        <span id='completion'></span>
         <script>
             async function completions() {
-                prompt=metadata.choice default&&metadata.index 0 prompt role.user content;
-                completion=metadata.choice default&&metadata.index 0 completion.choices.content;
-                document.querySelector('span[prompt]').textContent = prompt;
-                document.querySelector('span[completion]').textContent = completion;
+                const completions = await fetch('completions.json');
+                const data = await completions.json();
+                default_completion = data.metadata.choice default && data.metadata.index 0
+                prompt = default_completion.prompt user content;
+                completion = default_completion.choices.content;
+                document.getElementById('prompt').textContent = prompt;
+                document.getElementById('completion').textContent = completion;
             }
             window.onload=completions();
         </script>
