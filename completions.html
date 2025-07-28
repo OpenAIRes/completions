@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en-US">
+    <head>       
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>completions</title>
+    </head>
+    <body>
+        <span prompt></span>
+        <span completion></span>
+        <script>
+            async function completions() {
+                prompt=metadata.choice default&&metadata.index 0 prompt role.user content;
+                completion=metadata.choice default&&metadata.index 0 completion.choices.content;
+                document.querySelector('span[prompt]').textContent = prompt;
+                document.querySelector('span[completion]').textContent = completion;
+            }
+            window.onload=completions();
+        </script>
+    </body>
+</html>
