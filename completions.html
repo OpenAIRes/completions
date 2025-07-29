@@ -10,7 +10,7 @@
         <span id='completion'></span>
         <script>
             async function completions() {
-                const completions = await fetch('completions.json');
+                const completions = await fetch('completions_old.json');
                 const data = await completions.json();
                 default_completion = data.find(completion => completion.metadata?.choice === 'default' && completion.metadata?.index === '0');
                 prompt = default_completion.prompt[0].content;
