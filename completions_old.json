@@ -17,7 +17,11 @@
       "completion_tokens": 6,
       "total_tokens": 11
     },
-    "prompt": "Say this is a test"
+    "prompt": {
+      "content": {
+        "text": "Say this is a test"
+      }
+    }
   },
   {
     "id": "cmpl-BxorMu1DyXZSlKYDqKUs7QxVprxP8",
@@ -196,7 +200,11 @@
       "completion_tokens": 6,
       "total_tokens": 11
     },
-    "prompt": "Say this is a test"
+    "prompt": {
+      "content": {
+        "text": "Say this is a test"
+      }
+    }
   },
   {
     "id": "cmpl-BxpaaFPKkEXIIWTyfPbG4Bxg2H4R3",
@@ -400,7 +408,11 @@
       "completion_tokens": 7,
       "total_tokens": 8
     },
-    "prompt": ""
+    "prompt": {
+      "content": {
+        "text": ""
+      }
+    }
   },
   {
     "id": "cmpl-Bxpc9AqOf2sIPVVJ9hStmVtyNXV9O",
@@ -442,8 +454,8 @@
             -0.0012248703,
             -0.0004515262,
             -0.0024090658,
-            -0.00005443128,
-            -8.537869e-6,
+            -5.443128e-05,
+            -8.537869e-06,
             -0.00025335286,
             -0.00018327577,
             -0.00018971277
@@ -692,7 +704,7 @@
               "...\n\n": -13.260872
             },
             {
-              " the": -0.00005443128,
+              " the": -5.443128e-05,
               " The": -10.449164,
               "\n\n": -11.553472,
               "the": -12.118228,
@@ -714,7 +726,7 @@
               "…": -16.296587
             },
             {
-              " Year": -8.537869e-6,
+              " Year": -8.537869e-06,
               " year": -12.745873,
               "\n\n": -13.202098,
               "Year": -14.264127,
@@ -829,7 +841,11 @@
       "completion_tokens": 16,
       "total_tokens": 17
     },
-    "prompt": ""
+    "prompt": {
+      "content": {
+        "text": ""
+      }
+    }
   },
   {
     "id": "cmpl-BxpfPLyjxHK4PL3uzRRE5YRyNq2ja",
@@ -1008,7 +1024,11 @@
       "completion_tokens": 6,
       "total_tokens": 11
     },
-    "prompt": "Say this is a test"
+    "prompt": {
+      "content": {
+        "text": "Say this is a test"
+      }
+    }
   },
   {
     "id": "cmpl-BxpkrOf5AT69xhFsol5r9XOEzcFGY",
@@ -1197,7 +1217,11 @@
       "completion_tokens": 16,
       "total_tokens": 17
     },
-    "prompt": ""
+    "prompt": {
+      "content": {
+        "text": ""
+      }
+    }
   },
   {
     "id": "cmpl-Bxpu7Of6QgwcXeiZldWpz7fp1KGya",
@@ -1386,6 +1410,10 @@
       "completion_tokens": 16,
       "total_tokens": 17
     },
-    "prompt": ""
+    "prompt": {
+      "content": {
+        "text": ""
+      }
+    }
   }
 ]
