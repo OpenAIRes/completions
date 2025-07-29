@@ -14,7 +14,8 @@
                 const data = await completions.json();
                 default_completion = data.find(completion => completion.metadata?.choice === 'default' && completion.metadata?.index === '0');
                 prompt = default_completion.prompt[0].content;
-                completion = default_completion.choices[0].message.content;
+                const choice = default_completion.choices[0];
+                const completion = choice.message?.content ?? choice.text
                 document.getElementById('prompt').textContent = prompt;
                 document.getElementById('completion').textContent = completion;
             }
