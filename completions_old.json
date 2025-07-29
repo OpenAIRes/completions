@@ -21,11 +21,11 @@
       "completion_tokens": 6,
       "total_tokens": 11
     },
-    "prompt": [{
-      "content": {
-        "text": "Say this is a test"
+    "prompt": [
+      {
+        "content": "Say this is a test"
       }
-    }]
+    ]
   },
   {
     "id": "cmpl-BxorMu1DyXZSlKYDqKUs7QxVprxP8",
@@ -204,11 +204,11 @@
       "completion_tokens": 6,
       "total_tokens": 11
     },
-    "prompt": [{
-      "content": {
-        "text": "Say this is a test"
+    "prompt": [
+      {
+        "content": "Say this is a test"
       }
-    }]
+    ]
   },
   {
     "id": "cmpl-BxpaaFPKkEXIIWTyfPbG4Bxg2H4R3",
@@ -412,11 +412,11 @@
       "completion_tokens": 7,
       "total_tokens": 8
     },
-    "prompt":[{
-      "content": {
-        "text": ""
+    "prompt": [
+      {
+        "content": ""
       }
-    }]
+    ]
   },
   {
     "id": "cmpl-Bxpc9AqOf2sIPVVJ9hStmVtyNXV9O",
@@ -845,11 +845,11 @@
       "completion_tokens": 16,
       "total_tokens": 17
     },
-    "prompt": [{
-      "content": {
-        "text": ""
+    "prompt": [
+      {
+        "content": ""
       }
-    }]
+    ]
   },
   {
     "id": "cmpl-BxpfPLyjxHK4PL3uzRRE5YRyNq2ja",
@@ -1028,11 +1028,11 @@
       "completion_tokens": 6,
       "total_tokens": 11
     },
-    "prompt": [{
-      "content": {
-        "text": "Say this is a test"
+    "prompt": [
+      {
+        "content": "Say this is a test"
       }
-    }]
+    ]
   },
   {
     "id": "cmpl-BxpkrOf5AT69xhFsol5r9XOEzcFGY",
@@ -1221,11 +1221,11 @@
       "completion_tokens": 16,
       "total_tokens": 17
     },
-    "prompt": [{
-      "content": {
-        "text": ""
+    "prompt": [
+      {
+        "content": ""
       }
-    }]
+    ]
   },
   {
     "id": "cmpl-Bxpu7Of6QgwcXeiZldWpz7fp1KGya",
@@ -1414,10 +1414,10 @@
       "completion_tokens": 16,
       "total_tokens": 17
     },
-    "prompt": [{
-      "content": {
-        "text": ""
+    "prompt": [
+      {
+        "content": ""
       }
-    }]
+    ]
   }
 ]
