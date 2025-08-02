@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Chat Completions Viewer</title>
+    <title>Completions Manager</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,11 +14,20 @@
         }
         .search-container {
             margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         input[type="text"] {
             padding: 8px;
             width: 300px;
             font-size: 14px;
+        }
+        button {
+            padding: 6px 12px;
+            margin-left: 10px;
+            font-size: 14px;
+            cursor: pointer;
         }
         table {
             width: 100%;
@@ -40,12 +49,6 @@
         tr:hover {
             background: #f1f1f1;
         }
-        button {
-            padding: 5px 8px;
-            margin: 2px;
-            font-size: 13px;
-            cursor: pointer;
-        }
         /* Modal styles */
         .modal {
             display: none;
@@ -60,12 +63,12 @@
         }
         .modal-content {
             background: #fff;
-            margin: 10% auto;
+            margin: 3% auto;
             padding: 20px;
             border-radius: 5px;
             width: 80%;
             max-width: 700px;
-            max-height: 80%;
+            max-height: 90%;
             overflow-y: auto;
         }
         .modal-header {
@@ -84,12 +87,32 @@
             word-wrap: break-word;
             font-size: 14px;
         }
+        .advanced {
+            margin-top: 10px;
+        }
+        .advanced-settings {
+            display: none;
+            margin-top: 10px;
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, textarea, select {
+            width: 95%;
+            padding: 6px;
+            margin-top: 4px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h1>Chat Completions</h1>
+    <h1>Completions Manager</h1>
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Search by Model, ID, Message or type 'logprobs=true'..." />
+        <input type="text" id="searchInput" placeholder="Search by Model, ID, Message or use logprobs=true / temperature>0.5..." />
+        <button id="createNewBtn">+ Create New</button>
     </div>
     <table id="completionsTable">
         <thead>
@@ -102,39 +125,89 @@
                 <th data-sort="id">ID</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- Data will load here -->
-        </tbody>
+        <tbody></tbody>
     </table>
 
-    <!-- Modal -->
+    <!-- View Modal -->
     <div id="viewModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Completion Details</h3>
-                <span class="close" id="modalClose">&times;</span>
+                <span class="close" data-close="viewModal">&times;</span>
             </div>
             <pre id="modalContent"></pre>
+        </div>
+    </div>
+
+    <!-- Create/Update Modal -->
+    <div id="createModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="createModalTitle">Create Completion</h3>
+                <span class="close" data-close="createModal">&times;</span>
+            </div>
+            <form id="createForm">
+                <label>Model:</label>
+                <input type="text" id="modelField" required>
+
+                <label>Message / Prompt:</label>
+                <textarea id="messageField" rows="4" required></textarea>
+
+                <label>Temperature:</label>
+                <input type="number" step="0.1" id="temperatureField" value="1.0">
+
+                <div class="advanced">
+                    <button type="button" id="toggleAdvanced">Show Advanced Settings</button>
+                    <div class="advanced-settings" id="advancedSection">
+                        <label>Top P:</label>
+                        <input type="number" step="0.1" id="topPField" value="1.0">
+
+                        <label>Presence Penalty:</label>
+                        <input type="number" step="0.1" id="presencePenaltyField" value="0.0">
+
+                        <label>Frequency Penalty:</label>
+                        <input type="number" step="0.1" id="frequencyPenaltyField" value="0.0">
+
+                        <label>Seed:</label>
+                        <input type="number" id="seedField">
+
+                        <label>System Fingerprint:</label>
+                        <input type="text" id="systemFingerprintField">
+
+                        <label>Service Tier:</label>
+                        <select id="serviceTierField">
+                            <option value="default">Default</option>
+                            <option value="premium">Premium</option>
+                        </select>
+                    </div>
+                </div>
+
+                <br><br>
+                <button type="submit" id="saveBtn">Save</button>
+            </form>
         </div>
     </div>
 
     <script>
         const tableBody = document.querySelector("#completionsTable tbody");
         const searchInput = document.getElementById("searchInput");
-        const modal = document.getElementById("viewModal");
+        const viewModal = document.getElementById("viewModal");
+        const createModal = document.getElementById("createModal");
         const modalContent = document.getElementById("modalContent");
-        const modalClose = document.getElementById("modalClose");
+        const toggleAdvanced = document.getElementById("toggleAdvanced");
+        const advancedSection = document.getElementById("advancedSection");
+        const createModalTitle = document.getElementById("createModalTitle");
+        const createNewBtn = document.getElementById("createNewBtn");
         let completionsData = [];
         let sortDirection = {};
+        let editId = null;
 
-        // Load JSON data
         async function loadData() {
             const response = await fetch('completions.json');
             completionsData = await response.json();
             renderTable(completionsData);
         }
 
-        // Render table rows
         function renderTable(data) {
             tableBody.innerHTML = '';
             data.forEach(item => {
@@ -148,6 +221,7 @@
                     <td>
                         <button class="view-btn" data-id="${item.id}">View</button>
                         <button class="update-btn" data-id="${item.id}">Update</button>
+                        <button class="clone-btn" data-id="${item.id}">Clone</button>
                         <button class="delete-btn" data-id="${item.id}">Delete</button>
                     </td>
                     <td>${createdDate}</td>
@@ -156,113 +230,151 @@
                 `;
                 tableBody.appendChild(tr);
             });
-
             addActionListeners();
         }
 
-        // Add event listeners for buttons
         function addActionListeners() {
-            document.querySelectorAll(".view-btn").forEach(btn => {
-                btn.addEventListener("click", e => {
-                    const id = e.target.dataset.id;
-                    viewCompletion(id);
-                });
-            });
-            document.querySelectorAll(".update-btn").forEach(btn => {
-                btn.addEventListener("click", e => {
-                    const id = e.target.dataset.id;
-                    updateCompletion(id);
-                });
-            });
-            document.querySelectorAll(".delete-btn").forEach(btn => {
-                btn.addEventListener("click", e => {
-                    const id = e.target.dataset.id;
-                    deleteCompletion(id);
-                });
-            });
+            document.querySelectorAll(".view-btn").forEach(btn => btn.onclick = () => viewCompletion(btn.dataset.id));
+            document.querySelectorAll(".update-btn").forEach(btn => btn.onclick = () => openEditModal(btn.dataset.id, false));
+            document.querySelectorAll(".clone-btn").forEach(btn => btn.onclick = () => openEditModal(btn.dataset.id, true));
+            document.querySelectorAll(".delete-btn").forEach(btn => btn.onclick = () => deleteCompletion(btn.dataset.id));
         }
 
-        // Button actions
         function viewCompletion(id) {
             const completion = completionsData.find(c => c.id === id);
             modalContent.textContent = JSON.stringify(completion, null, 2);
-            modal.style.display = "block";
+            viewModal.style.display = "block";
         }
 
-        function updateCompletion(id) {
-            alert(`Update functionality for ID: ${id} (not implemented yet)`);
+        function openEditModal(id, isClone) {
+            const completion = completionsData.find(c => c.id === id);
+            editId = isClone ? null : id;
+            createModalTitle.textContent = isClone ? "Clone Completion" : "Update Completion";
+            fillForm(completion);
+            createModal.style.display = "block";
+        }
+
+        function fillForm(item) {
+            const msg = item.choices[0]?.message?.content || item.choices[0]?.text || '';
+            document.getElementById("modelField").value = item.model || '';
+            document.getElementById("messageField").value = msg;
+            document.getElementById("temperatureField").value = item.temperature || 1.0;
+            document.getElementById("topPField").value = item.top_p || 1.0;
+            document.getElementById("presencePenaltyField").value = item.presence_penalty || 0.0;
+            document.getElementById("frequencyPenaltyField").value = item.frequency_penalty || 0.0;
+            document.getElementById("seedField").value = item.seed || '';
+            document.getElementById("systemFingerprintField").value = item.system_fingerprint || '';
+            document.getElementById("serviceTierField").value = item.service_tier || 'default';
         }
 
         function deleteCompletion(id) {
-            if (confirm(`Are you sure you want to delete completion with ID: ${id}?`)) {
+            if (confirm(`Delete completion ${id}?`)) {
                 completionsData = completionsData.filter(c => c.id !== id);
                 renderTable(completionsData);
             }
         }
 
-        modalClose.addEventListener("click", () => {
-            modal.style.display = "none";
-        });
+        document.getElementById("createForm").onsubmit = e => {
+            e.preventDefault();
+            const model = document.getElementById("modelField").value.trim();
+            const message = document.getElementById("messageField").value.trim();
+            const temperature = parseFloat(document.getElementById("temperatureField").value);
+            const top_p = parseFloat(document.getElementById("topPField").value);
+            const presence_penalty = parseFloat(document.getElementById("presencePenaltyField").value);
+            const frequency_penalty = parseFloat(document.getElementById("frequencyPenaltyField").value);
+            const seed = document.getElementById("seedField").value ? parseInt(document.getElementById("seedField").value) : null;
+            const system_fingerprint = document.getElementById("systemFingerprintField").value;
+            const service_tier = document.getElementById("serviceTierField").value;
 
-        window.onclick = function(event) {
-            if (event.target === modal) {
-                modal.style.display = "none";
+            const newCompletion = {
+                object: "chat.completion",
+                id: editId ? editId : "custom-" + Date.now(),
+                model,
+                created: Math.floor(Date.now() / 1000),
+                temperature,
+                top_p,
+                presence_penalty,
+                frequency_penalty,
+                seed,
+                system_fingerprint,
+                service_tier,
+                usage: { total_tokens: 0 },
+                choices: [
+                    { index: 0, message: { content: message, role: "assistant" }, logprobs: null }
+                ]
+            };
+
+            if (editId) {
+                const idx = completionsData.findIndex(c => c.id === editId);
+                completionsData[idx] = newCompletion;
+            } else {
+                completionsData.unshift(newCompletion);
             }
+            renderTable(completionsData);
+            createModal.style.display = "none";
+            e.target.reset();
         };
 
-        // Search filter
-        searchInput.addEventListener("input", (e) => {
-            const query = e.target.value.toLowerCase().trim();
+        createNewBtn.onclick = () => {
+            editId = null;
+            createModalTitle.textContent = "Create Completion";
+            document.getElementById("createForm").reset();
+            createModal.style.display = "block";
+        };
 
+        toggleAdvanced.onclick = () => {
+            advancedSection.style.display = advancedSection.style.display === "block" ? "none" : "block";
+            toggleAdvanced.textContent = advancedSection.style.display === "block" ? "Hide Advanced Settings" : "Show Advanced Settings";
+        };
+
+        document.querySelectorAll(".close").forEach(el => el.onclick = () => document.getElementById(el.dataset.close).style.display = "none");
+        window.onclick = e => { if (e.target.classList.contains("modal")) e.target.style.display = "none"; };
+
+        searchInput.oninput = e => {
+            const query = e.target.value.toLowerCase().trim();
             const filtered = completionsData.filter(item => {
                 const message = item.choices && (item.choices[0]?.message?.content || item.choices[0]?.text || '');
-
-                // Special filter for logprobs=true
-                if (query === "logprobs=true") {
-                    return item.choices[0]?.logprobs !== null && item.choices[0]?.logprobs !== undefined;
-                }
-
-                // Special filter for temperature=X
-                if (query.startsWith("temperature=")) {
-                    const tempValue = parseFloat(query.split("=")[1]);
-                    return item.temperature === tempValue;
-                }
-
-                return item.id.toLowerCase().includes(query) ||
-                    item.model.toLowerCase().includes(query) ||
-                    message.toLowerCase().includes(query);
-            });
-
-            renderTable(filtered);
-        });
-
-
-        // Sorting
-        document.querySelectorAll("th[data-sort]").forEach(th => {
-            th.addEventListener("click", () => {
-                const key = th.getAttribute("data-sort");
-                sortDirection[key] = !sortDirection[key];
-                const sorted = [...completionsData].sort((a, b) => {
-                    let valA, valB;
-                    if (key === "message") {
-                        valA = a.choices[0]?.message?.content || a.choices[0]?.text || '';
-                        valB = b.choices[0]?.message?.content || b.choices[0]?.text || '';
-                    } else if (key === "tokens") {
-                        valA = a.usage?.total_tokens || 0;
-                        valB = b.usage?.total_tokens || 0;
-                    } else {
-                        valA = a[key];
-                        valB = b[key];
+                if (query === "logprobs=true") return item.choices[0]?.logprobs !== null && item.choices[0]?.logprobs !== undefined;
+                if (query.startsWith("temperature")) {
+                    const match = query.match(/^temperature([<>]=?|=)([0-9.]+)/);
+                    if (match) {
+                        const op = match[1], val = parseFloat(match[2]);
+                        switch (op) {
+                            case "=": return item.temperature === val;
+                            case ">": return item.temperature > val;
+                            case "<": return item.temperature < val;
+                            case ">=": return item.temperature >= val;
+                            case "<=": return item.temperature <= val;
+                        }
                     }
-                    if (valA < valB) return sortDirection[key] ? -1 : 1;
-                    if (valA > valB) return sortDirection[key] ? 1 : -1;
-                    return 0;
-                });
-                renderTable(sorted);
+                }
+                return item.id.toLowerCase().includes(query) || item.model.toLowerCase().includes(query) || message.toLowerCase().includes(query);
             });
+            renderTable(filtered);
+        };
+
+        document.querySelectorAll("th[data-sort]").forEach(th => th.onclick = () => {
+            const key = th.dataset.sort;
+            sortDirection[key] = !sortDirection[key];
+            const sorted = [...completionsData].sort((a, b) => {
+                let valA, valB;
+                if (key === "message") {
+                    valA = a.choices[0]?.message?.content || a.choices[0]?.text || '';
+                    valB = b.choices[0]?.message?.content || b.choices[0]?.text || '';
+                } else if (key === "tokens") {
+                    valA = a.usage?.total_tokens || 0;
+                    valB = b.usage?.total_tokens || 0;
+                } else {
+                    valA = a[key];
+                    valB = b[key];
+                }
+                if (valA < valB) return sortDirection[key] ? -1 : 1;
+                if (valA > valB) return sortDirection[key] ? 1 : -1;
+                return 0;
+            });
+            renderTable(sorted);
         });
 
-        // Load data on page load
         loadData();
     </script>
 </body>
