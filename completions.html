@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>completions</title>
+    <title>Chat Completions Viewer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,7 +17,7 @@
         }
         input[type="text"] {
             padding: 8px;
-            width: 250px;
+            width: 300px;
             font-size: 14px;
         }
         table {
@@ -35,25 +35,68 @@
         }
         th, td {
             padding: 10px;
+            vertical-align: top;
         }
         tr:hover {
             background: #f1f1f1;
+        }
+        button {
+            padding: 5px 8px;
+            margin: 2px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 5px;
+            width: 80%;
+            max-width: 700px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .close {
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
     <h1>Chat Completions</h1>
     <div class="search-container">
-        <input type="text" id="searchInput" placeholder="Search by Model, ID or Message..." />
+        <input type="text" id="searchInput" placeholder="Search by Model, ID, Message or type 'logprobs=true'..." />
     </div>
     <table id="completionsTable">
         <thead>
             <tr>
                 <th data-sort="model">Model</th>
                 <th data-sort="message">Message</th>
-                <th>View</th>
-                <th>Update</th>
-                <th>Delete</th>
+                <th>Actions</th>
                 <th data-sort="created">Created</th>
                 <th data-sort="tokens">Tokens</th>
                 <th data-sort="id">ID</th>
@@ -64,13 +107,27 @@
         </tbody>
     </table>
 
+    <!-- Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Completion Details</h3>
+                <span class="close" id="modalClose">&times;</span>
+            </div>
+            <pre id="modalContent"></pre>
+        </div>
+    </div>
+
     <script>
         const tableBody = document.querySelector("#completionsTable tbody");
         const searchInput = document.getElementById("searchInput");
+        const modal = document.getElementById("viewModal");
+        const modalContent = document.getElementById("modalContent");
+        const modalClose = document.getElementById("modalClose");
         let completionsData = [];
         let sortDirection = {};
 
-        // Fetch JSON data
+        // Load JSON data
         async function loadData() {
             const response = await fetch('completions.json');
             completionsData = await response.json();
@@ -83,33 +140,102 @@
             data.forEach(item => {
                 const tr = document.createElement("tr");
                 const createdDate = new Date(item.created * 1000).toLocaleString();
-                const message = item.choices && item.choices[0]?.message?.content || '';
+                const message = item.choices && (item.choices[0]?.message?.content || item.choices[0]?.text || '');
                 const tokens = item.usage ? item.usage.total_tokens : '';
                 tr.innerHTML = `
                     <td>${item.model}</td>
                     <td>${message}</td>
-                    <td><button onclick="Show details for ${cmp.id}">View</button></td>
-                    <td><button onclick="Update ${cmp.id}">Update</button></td>
-                    <td><button onclick="Delete ${cmp.id}">Delete</button></td>
+                    <td>
+                        <button class="view-btn" data-id="${item.id}">View</button>
+                        <button class="update-btn" data-id="${item.id}">Update</button>
+                        <button class="delete-btn" data-id="${item.id}">Delete</button>
+                    </td>
                     <td>${createdDate}</td>
                     <td>${tokens}</td>
                     <td>${item.id}</td>
                 `;
                 tableBody.appendChild(tr);
             });
+
+            addActionListeners();
         }
+
+        // Add event listeners for buttons
+        function addActionListeners() {
+            document.querySelectorAll(".view-btn").forEach(btn => {
+                btn.addEventListener("click", e => {
+                    const id = e.target.dataset.id;
+                    viewCompletion(id);
+                });
+            });
+            document.querySelectorAll(".update-btn").forEach(btn => {
+                btn.addEventListener("click", e => {
+                    const id = e.target.dataset.id;
+                    updateCompletion(id);
+                });
+            });
+            document.querySelectorAll(".delete-btn").forEach(btn => {
+                btn.addEventListener("click", e => {
+                    const id = e.target.dataset.id;
+                    deleteCompletion(id);
+                });
+            });
+        }
+
+        // Button actions
+        function viewCompletion(id) {
+            const completion = completionsData.find(c => c.id === id);
+            modalContent.textContent = JSON.stringify(completion, null, 2);
+            modal.style.display = "block";
+        }
+
+        function updateCompletion(id) {
+            alert(`Update functionality for ID: ${id} (not implemented yet)`);
+        }
+
+        function deleteCompletion(id) {
+            if (confirm(`Are you sure you want to delete completion with ID: ${id}?`)) {
+                completionsData = completionsData.filter(c => c.id !== id);
+                renderTable(completionsData);
+            }
+        }
+
+        modalClose.addEventListener("click", () => {
+            modal.style.display = "none";
+        });
+
+        window.onclick = function(event) {
+            if (event.target === modal) {
+                modal.style.display = "none";
+            }
+        };
 
         // Search filter
         searchInput.addEventListener("input", (e) => {
-            const query = e.target.value.toLowerCase();
+            const query = e.target.value.toLowerCase().trim();
+
             const filtered = completionsData.filter(item => {
-                const message = item.choices && item.choices[0]?.message?.content || '';
+                const message = item.choices && (item.choices[0]?.message?.content || item.choices[0]?.text || '');
+
+                // Special filter for logprobs=true
+                if (query === "logprobs=true") {
+                    return item.choices[0]?.logprobs !== null && item.choices[0]?.logprobs !== undefined;
+                }
+
+                // Special filter for temperature=X
+                if (query.startsWith("temperature=")) {
+                    const tempValue = parseFloat(query.split("=")[1]);
+                    return item.temperature === tempValue;
+                }
+
                 return item.id.toLowerCase().includes(query) ||
-                       item.model.toLowerCase().includes(query) ||
-                       message.toLowerCase().includes(query);
+                    item.model.toLowerCase().includes(query) ||
+                    message.toLowerCase().includes(query);
             });
+
             renderTable(filtered);
         });
+
 
         // Sorting
         document.querySelectorAll("th[data-sort]").forEach(th => {
@@ -119,8 +245,8 @@
                 const sorted = [...completionsData].sort((a, b) => {
                     let valA, valB;
                     if (key === "message") {
-                        valA = a.choices[0]?.message?.content || '';
-                        valB = b.choices[0]?.message?.content || '';
+                        valA = a.choices[0]?.message?.content || a.choices[0]?.text || '';
+                        valB = b.choices[0]?.message?.content || b.choices[0]?.text || '';
                     } else if (key === "tokens") {
                         valA = a.usage?.total_tokens || 0;
                         valB = b.usage?.total_tokens || 0;
